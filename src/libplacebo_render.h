@@ -12,11 +12,10 @@ extern "C" {
 #include "libplacebo/utils/upload.h"
 }
 
-std::unique_ptr<struct priv> avs_libplacebo_init(const VkPhysicalDevice& device, std::string& err_msg);
+std::unique_ptr<struct priv> avs_libplacebo_init(vk_inst_ptr& inst, const VkPhysicalDevice device, std::string& err_msg);
 
-[[maybe_unused]]
-AVS_Value devices_info(AVS_Clip* clip, AVS_ScriptEnvironment* env, std::vector<VkPhysicalDevice>& devices, VkInstance& inst,
-    std::string& msg, const std::string& name, const int device, const int list_device);
+std::optional<std::string> devices_info(
+    AVS_Clip* clip, AVS_ScriptEnvironment* env, std::vector<VkPhysicalDevice>& devices, vk_inst_ptr& inst, int& device, int list_devices);
 
 struct cached_frame
 {
@@ -27,6 +26,8 @@ struct cached_frame
 
 struct priv
 {
+    vk_inst_ptr vk_inst;
+
     pl_log_ptr log;
     pl_vulkan_ptr vk;
 

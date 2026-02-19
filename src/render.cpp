@@ -677,32 +677,42 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
 
     // --- Device Initialization ---
     {
-        const int device{avs_helpers::get_opt_arg<int>(env, args, get_param_idx<"device">()).value_or(-1)};
+        int device{avs_helpers::get_opt_arg<int>(env, args, get_param_idx<"device">()).value_or(-1)};
         const int list_devices{avs_helpers::get_opt_arg<bool>(env, args, get_param_idx<"list_devices">()).value_or(0)};
-        if (list_devices || device > -1)
-        {
-            std::vector<VkPhysicalDevice> devices{};
-            VkInstance inst{};
 
-            AVS_Value dev_info{devices_info(clip, fi->env, devices, inst, msg, "libplacebo_Render", device, list_devices)};
-            if (avs_is_error(dev_info) || avs_is_clip(dev_info))
+        std::vector<VkPhysicalDevice> devices{};
+        vk_inst_ptr inst;
+        const auto dev_info{devices_info(clip, fi->env, devices, inst, device, list_devices)};
+
+        if (dev_info)
+        {
+            fi->user_data = params.release();
+            fi->free_filter = free_render;
+            return avs_err_val(env, *dev_info);
+        }
+
+        if (list_devices)
+        {
+            for (size_t i{0}; i < devices.size(); ++i)
             {
-                fi->user_data = params.release();
-                fi->free_filter = free_render;
-                return dev_info;
+                VkPhysicalDeviceProperties properties{};
+                vkGetPhysicalDeviceProperties(devices[i], &properties);
+                msg += std::to_string(i) + ": " + std::string(properties.deviceName) + "\n";
             }
 
-            params->vf = avs_libplacebo_init(devices[device], msg);
-            vkDestroyInstance(inst, nullptr);
-        }
-        else
-        {
-            if (device < -1)
-                return avs_new_value_error("libplacebo_Render: device must be greater than or equal to -1.");
+            AVS_Value cl;
+            g_avs_api->avs_set_to_clip(&cl, clip);
+            avs_helpers::avs_value_guard cl_guard(cl);
+            AVS_Value args_[2]{cl_guard.get(), avs_new_value_string(msg.c_str())};
+            AVS_Value inv{g_avs_api->avs_invoke(env, "Text", avs_new_value_array(args_, 2), 0)};
 
-            params->vf = avs_libplacebo_init(nullptr, msg);
+            fi->user_data = params.release();
+            fi->free_filter = free_render;
+
+            return inv;
         }
 
+        params->vf = avs_libplacebo_init(inst, devices[device], msg);
         if (!msg.empty())
             return avs_err_val(env, std::format("libplacebo_Render: {}", msg));
     }

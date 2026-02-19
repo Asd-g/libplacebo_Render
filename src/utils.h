@@ -10,6 +10,16 @@ extern "C" {
 #include "libplacebo/vulkan.h"
 }
 
+struct vk_inst_deleter
+{
+    void operator()(VkInstance_T* inst) const noexcept
+    {
+        vkDestroyInstance(inst, nullptr);
+    }
+};
+
+using vk_inst_ptr = std::unique_ptr<VkInstance_T, vk_inst_deleter>;
+
 struct pl_log_deleter
 {
     void operator()(const pl_log_t* ptr) const noexcept
