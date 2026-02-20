@@ -326,6 +326,19 @@ inline constexpr Map<std::string_view, pl_lut_type, 4> parse_lut_type{{{
     {"conversion", PL_LUT_CONVERSION},
 }}};
 
+inline constexpr Map<std::string_view, int, 3> parse_aspect_mode{{{
+    {"stretch", 0},
+    {"fit", 1},
+    {"fill", 2},
+}}};
+
+inline constexpr Map<std::string_view, pl_clear_mode, 3> parse_clear_mode{{{
+    {"color", PL_CLEAR_COLOR},
+    //{"tiles", PL_CLEAR_TILES},
+    {"skip", PL_CLEAR_SKIP},
+    {"blur", PL_CLEAR_BLUR},
+}}};
+
 bool apply_csp_preset(std::string_view str, pl_color_space& csp, pl_color_repr& repr, std::string_view* out_fmt = nullptr) noexcept
 {
     struct csp_preset

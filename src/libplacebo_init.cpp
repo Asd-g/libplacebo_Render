@@ -2,7 +2,7 @@
 
 #include "libplacebo_render.h"
 
-static_assert(PL_API_VER >= 358, "libplacebo version must be at least v7.358.0.");
+static_assert(PL_API_VER >= 360, "libplacebo version must be at least v7.360.0.");
 
 static void pl_logging_cb(void* log_priv, pl_log_level level, const char* msg) noexcept
 {

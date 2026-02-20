@@ -38,6 +38,7 @@ float "src_left",
 float "src_top",
 float "src_width",
 float "src_height",
+string "aspect_mode",
 string "custom_shader_path",
 string "custom_shader_param",
 string "upscaler",
@@ -172,6 +173,10 @@ bool "show_clipping",
 string "out_fmt",
 string "lut",
 string "lut_type",
+string "border",
+float[] "border_color",
+float "background_transparency",
+float "blur_radius",
 float "corner_rounding",
 int "device",
 bool "list_device",
@@ -219,6 +224,13 @@ Default: `0.0`.
 If `> 0.0` it sets the width / height of the clip before resizing.<br>
 If `<= 0.0` it sets the cropping of the right / bottom edge before resizing.<br>
 Default: Source width / height.
+
+##### ***`aspect_mode`***
+Configures how the input image is scaled to fit the output dimensions (`width` / `height`).<br>
+* `"stretch"`: Stretches the image to fill the output frame. Aspect ratio is **not** preserved.
+* `"fit"`: Scales the image to fit inside the output frame while maintaining aspect ratio. May result in borders (see `border`).
+* `"fill"`: Scales the image to completely cover the output frame while maintaining aspect ratio. May result in cropping.
+Default: `"stretch"`.
 
 ##### ***`out_fmt`***
 Explicitly set the output pixel format (e.g., `"YV12"`, `"RGBPS"`, `"YUV420P10"`).<br>
@@ -931,6 +943,37 @@ How the LUT should be applied.<br>
 * `"normalized"`: LUT is applied to normalized (HDR) RGB values
 * `"conversion"`: LUT fully replaces color conversion step
 Default: `"unknown"`.
+
+##### ***`border`***
+Controls how the remaining empty space in the target is filled up, when the image does not span the entire framebuffer (e.g. when `aspect_mode="fit"`).<br>
+* `"color"`: Fill the border with a solid color (see `border_color`).
+* `"blur"`: Fill the border with a blurred copy of the image (see `blur_radius`).
+* `"skip"`: Skip clearing the border. This usually results in garbage data.
+If this is specified and `aspect_mode` is not specified, `aspect_mode="fit"`.<br>
+Default: `"color"`.
+
+##### ***`border_color`***
+The color to use when `border="color"`.<br>
+Specified as an array of 3 RGB float values `[Red, Green, Blue]`.<br>
+Must be between `0.0`..`1.0`.<br>
+**Note:** You must specify RGB values even if the clip is YUV. The plugin handles the color conversion internally.<br>
+If this is specified and `aspect_mode` is not specified, `aspect_mode="fit"`.<br>
+Default: `[0.0, 0.0, 0.0]` (Black).
+
+##### ***`background_transparency`***
+Controls the transparency of the border/background.<br>
+* `0.0`: Fully Opaque.
+* `1.0`: Fully Transparent.
+**Note:** This only affects the output if the destination format has an alpha channel. If the output is opaque, this setting is ignored.<br>
+If this is specified and `aspect_mode` is not specified, `aspect_mode="fit"`.<br>
+Default: `0.0`.
+
+##### ***`blur_radius`***
+The blur radius (in pixels) to use when `border="blur"`.<br>
+Must be between `0.0..1000.0`.<br>
+If this is specified and `aspect_mode` is not specified, `aspect_mode="fit"`.<br>
+If this is specified and `border` is not specified, `border="blur"`.<br>
+Default: `16.0`.
 
 ##### ***`corner_rounding`***
 If set to a value above `0.0`, the output will be rendered with rounded

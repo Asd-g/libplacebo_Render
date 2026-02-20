@@ -23,6 +23,8 @@ inline constexpr std::array filter_params{
     param_def{"src_width", "f"},
     param_def{"src_height", "f"},
 
+    param_def{"aspect_mode", "s"},
+
     // --- CUSTOM SHADER ---
     param_def{"custom_shader_path", "s"},
     param_def{"custom_shader_param", "s"},
@@ -191,6 +193,10 @@ inline constexpr std::array filter_params{
     param_def{"out_fmt", "s"},
     param_def{"lut", "s"},
     param_def{"lut_type", "s"},
+    param_def{"border", "s"},
+    param_def{"border_color", "f*"},
+    param_def{"background_transparency", "f"},
+    param_def{"blur_radius", "f"},
     param_def{"corner_rounding", "f"},
     param_def{"device", "i"},
     param_def{"list_devices", "b"},

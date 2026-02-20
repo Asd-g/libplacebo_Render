@@ -233,8 +233,9 @@ namespace
             return -1;
 
         auto& src_frame{d->src_frame};
+        auto& src_planes{src_frame.planes};
         for (int i{0}; i < d->src_num_planes; ++i)
-            src_frame.planes[i].texture = (*textures_curr)[i];
+            src_planes[i].texture = (*textures_curr)[i];
 
         pl_frame_set_chroma_location(&src_frame, d->src_cplace);
 
@@ -1208,6 +1209,75 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
     // --- Destination color ---
     auto& dst_frame{params->dst_frame};
 
+    {
+        // Aspect Mode
+        int aspect_mode{0};
+
+        if (process_param(avs_helpers::get_opt_arg<std::string>(env, args, get_param_idx<"aspect_mode">()), parse_aspect_mode, aspect_mode,
+                "aspect_mode");
+            !msg.empty())
+            return avs_err_val(env, msg);
+
+        const auto border{avs_helpers::get_opt_arg<std::string>(env, args, get_param_idx<"border">())};
+        const auto border_color{avs_helpers::get_opt_array_as_vector<float>(env, args, get_param_idx<"border_color">())};
+        const auto background_transparency{avs_helpers::get_opt_arg<float>(env, args, get_param_idx<"background_transparency">())};
+        const auto blur_radius{avs_helpers::get_opt_arg<float>(env, args, get_param_idx<"blur_radius">())};
+
+        if (aspect_mode || border || !border_color.empty() || background_transparency || blur_radius)
+        {
+            if (!aspect_mode)
+                aspect_mode = 1;
+
+            const float src_w_eff{std::abs(src_frame.crop.x1 - src_frame.crop.x0)};
+            const float src_h_eff{std::abs(src_frame.crop.y1 - src_frame.crop.y0)};
+
+            if (src_w_eff > 0.0f && src_h_eff > 0.0f)
+            {
+                const float dst_w{static_cast<float>(vi.width)};
+                const float dst_h{static_cast<float>(vi.height)};
+
+                const float scale_x{dst_w / src_w_eff};
+                const float scale_y{dst_h / src_h_eff};
+
+                const float scale{(aspect_mode == 1) ? (std::min)(scale_x, scale_y) : (std::max)(scale_x, scale_y)};
+
+                const float draw_w{src_w_eff * scale};
+                const float draw_h{src_h_eff * scale};
+
+                dst_frame.crop = {.x0 = (dst_w - draw_w) / 2.0f,
+                    .y0 = (dst_h - draw_h) / 2.0f,
+                    .x1 = (dst_w + draw_w) / 2.0f,
+                    .y1 = (dst_h + draw_h) / 2.0f};
+            }
+
+            if (process_param(border, parse_clear_mode, render_data->border, "border"); !msg.empty())
+                return avs_err_val(env, msg);
+
+            if (const size_t border_color_num{border_color.size()})
+            {
+                if (border_color_num > 3)
+                    return avs_new_value_error("libplacebo_Render: border_color_num index out of range.");
+
+                auto& backgr_col{render_data->background_color};
+                for (int i{0}; i < border_color_num; ++i)
+                {
+                    if (border_color[i] < 0.0f || border_color[i] > 1.0f)
+                        return avs_err_val(
+                            env, std::format("libplacebo_Deband: `border_color[{}]` ({}) must be between 0.0..1.0", i, border_color[i]));
+
+                    backgr_col[i] = border_color[i];
+                }
+            }
+
+            if (!update_param(background_transparency, render_data->background_transparency, "background_transparency", msg, 0.0f, 1.0f))
+                return avs_err_val(env, msg);
+            if (!update_param(blur_radius, render_data->blur_radius, "blur_radius", msg, 0.0f, 1000.0f))
+                return avs_err_val(env, msg);
+            if (blur_radius && !border)
+                render_data->border = PL_CLEAR_BLUR;
+        }
+    }
+
     const auto dst_csp{avs_helpers::get_opt_arg<std::string>(env, args, get_param_idx<"dst_csp">())};
     std::string_view dst_csp_fmt;
     if (dst_csp)
@@ -1778,6 +1848,10 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
     if (render_data->error_diffusion)
         dst_caps = static_cast<pl_fmt_caps>(dst_caps | PL_FMT_CAP_STORABLE);
 
+    const bool is_border_color{render_data->border == PL_CLEAR_COLOR};
+    if (is_border_color)
+        dst_caps = static_cast<pl_fmt_caps>(dst_caps | PL_FMT_CAP_BLITTABLE);
+
     const pl_fmt dst_fmt{
         pl_find_fmt(gpu, (dst_sample_depth < 32) ? PL_FMT_UNORM : PL_FMT_FLOAT, 1, dst_sample_depth, dst_sample_depth, dst_caps)};
     if (!dst_fmt)
@@ -1791,6 +1865,7 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
     const bool dst_props{(dst_frame.repr.sys == PL_COLOR_SYSTEM_RGB) || (g_avs_api->avs_num_components(&vi) == 1)};
     const int dst_sub_w{(dst_props) ? 0 : g_avs_api->avs_get_plane_width_subsampling(&vi, AVS_PLANAR_U)};
     const int dst_sub_h{(dst_props) ? 0 : g_avs_api->avs_get_plane_height_subsampling(&vi, AVS_PLANAR_U)};
+    auto& dst_planes{dst_frame.planes};
 
     for (int i{0}; i < params->dst_num_planes; ++i)
     {
@@ -1800,6 +1875,7 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
             .format = dst_fmt,
             .sampleable = (dst_sample_depth == 32 || src_bit_depth == 32),
             .renderable = true,
+            .blit_dst = (is_border_color),
             .host_readable = true,
         };
         auto& tex_out{params->vf->tex_out};
@@ -1807,9 +1883,9 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
         if (!pl_tex_recreate(gpu, &tex_out[i], &t_r))
             return avs_new_value_error("libplacebo_Render: cannot allocate out texture.");
 
-        dst_frame.planes[i].texture = tex_out[i];
-        dst_frame.planes[i].components = 1;
-        dst_frame.planes[i].component_mapping[0] = i;
+        dst_planes[i].texture = tex_out[i];
+        dst_planes[i].components = 1;
+        dst_planes[i].component_mapping[0] = i;
     }
 
     AVS_Value v;
