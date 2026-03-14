@@ -210,6 +210,7 @@ Override all options from all sections by the values from the given preset.<br>
     * color_map=`high_quality`
     * dither enabled
     * deband enabled
+
 Default: not specified (all advanced rendering disabled, color_map settings - `pl_color_map_high_quality_params`).
 
 ##### ***`width` / `height`***
@@ -230,6 +231,7 @@ Configures how the input image is scaled to fit the output dimensions (`width` /
 * `"stretch"`: Stretches the image to fill the output frame. Aspect ratio is **not** preserved.
 * `"fit"`: Scales the image to fit inside the output frame while maintaining aspect ratio. May result in borders (see `border`).
 * `"fill"`: Scales the image to completely cover the output frame while maintaining aspect ratio. May result in cropping.
+
 Default: `"stretch"`.
 
 ##### ***`out_fmt`***
@@ -248,7 +250,8 @@ Default: not specified.
 * `"bilinear"` (resizable)
 * `"triangle"` (bilinear alias)
 * `"gaussian"` (resizable)
-  Sinc family (all configured to 3 taps):
+
+Sinc family (all configured to 3 taps):
 * `"sinc"` (unwindowed) (resizable)
 * `"lanczos"` (sinc-sinc) (resizable)
 * `"ginseng"` (sinc-jinc) (resizable)
@@ -259,7 +262,8 @@ Default: not specified.
 * `"ewa_ginseng"` (jinc-sinc) (resizable)
 * `"ewa_hann"` (jinc-hann) (resizable)
 * `"ewa_hanning"` (ewa_hann alias)
-  Spline family:
+
+Spline family:
 * `"bicubic"`
 * `"triangle"` (bicubic alias)
 * `"hermite"`
@@ -403,6 +407,7 @@ transfer, primaries, and levels.<br>
 * `"adobe"`, `"adobergb"`
 * `"p3"`, `"dci-p3"`
 * `"p3-d65"`, `"display-p3"`
+
 Default: not specified.
 
 ##### ***`src_matrix` / `dst_matrix`***
@@ -419,7 +424,8 @@ Color system coefficients.<br>
 * `"ycgco"`
 * `"ycgco-re"`
 * `"ycgco-ro"`
-* `"xyz"`.
+* `"xyz"`
+
 Default: not specified.
 
 ##### ***`src_trc` / `dst_trc`***
@@ -440,6 +446,7 @@ Transfer characteristics (Gamma/EETF).<br>
 * `"vlog"`, `"v-log"`
 * `"slog1"`, `"s-log1"`
 * `"slog2"`, `"s-log2"`
+
 Default: not specified.
 
 ##### ***`src_prim` / `dst_prim`***
@@ -460,12 +467,14 @@ Color primaries.<br>
 * `"film"`, `"film-c"`
 * `"aces"`, `"ap0"`, `"aces-ap0"`
 * `"ap1"`, `"aces-ap1"`
+
 Default: not specified.
 
 ##### ***`src_levels` / `dst_levels`***
 Color range.<br>
 * `"limited"`, `"tv"`
 * `"full"`, `"pc"`
+
 Default: YUV < 32-bit - `"tv"`, otherwise "pc".
 
 ##### ***`src_alpha` / `dst_alpha`***
@@ -473,6 +482,7 @@ Alpha channel interpretation.<br>
 * `"none"`
 * `"independent"`
 * `"premultiplied"`
+
 Default: not specified.
 
 ##### ***`src_cplace` / `dst_cplace`***
@@ -483,6 +493,7 @@ Chroma sample location.<br>
 * `"top_center"`
 * `"bottom_left"`
 * `"bottom_center"`
+
 Default: `"left"`.
 
 [Back to top](#description)
@@ -505,6 +516,7 @@ Preset for the color mapping (tone/gamut) engine.<br>
     * visualize_rect={0, 0, 1, 1}
     * contrast_smoothness=3.5f
 * `"high_quality"` - `"default"` + `contrast_recovery=0.30f`.
+
 Default: if `preset` is not specified, `"high_quality`.
 
 ##### ***`gamut_mapping`***
@@ -535,6 +547,7 @@ Algorithm used to handle out-of-gamut colors.<br>
     pixels.
 * `"linear"`: Linearly/uniformly desaturates the image in order to bring the
     entire image into the target gamut.
+
 Default: `"perceptual"`.
 
 ##### ***`perceptual_deadzone` / `perceptual_strength`***
@@ -618,6 +631,7 @@ Algorithm for adapting between different luminance ranges.<br>
 * `"linearlight"`: Like `linear`, but in linear light (instead of PQ). Works well
     for small range adjustments but may cause severe darkening when
     downconverting from e.g. 10k nits to SDR.
+
 Default: `"spline"`.
 
 ##### ***`tone_constants`***
@@ -710,6 +724,7 @@ Preset for peak detection.<br>
     * percentile= 100.0f
     * black_cutoff=1.0f
 * `"high_quality"` - `"default"` + `percentile=99.995f`.
+
 Default: if `preset` is not specified, `"high_quality"`.<br>
 If this is specified, `peak_detect` is always `true`.
 
@@ -752,6 +767,7 @@ Metadata source preference.<br>
 * `"hdr10"`
 * `"hdr10plus"`
 * `"cie_y"`
+
 Default: `"any"`.
 
 ##### ***`dovi_metadata`***
@@ -767,12 +783,14 @@ Brightness boost. Adds a constant bias onto the source luminance signal.<br>
 * `0.0` = neutral
 * `1.0` = solid white
 * `-1.0` = solid black
+
 Default: `0.0`.
 
 ##### ***`contrast`***
 Contrast gain. Multiplies the source luminance signal by a constant factor.<br>
 * `1.0` = neutral
 * `0.0` = solid black
+
 Must be between `0.0..100.0`.<br>
 Default: `1.0`.
 
@@ -780,6 +798,7 @@ Default: `1.0`.
 Saturation gain. Multiplies the source chromaticity signal by a constant factor.<br>
 * `1.0` = neutral
 * `0.0` = grayscale
+
 Must be between `0.0..100.0`.<br>
 Default: `1.0`.
 
@@ -792,6 +811,7 @@ Default: `0.0` (neutral).
 Gamma lift. Subjectively brightnes or darkens the scene while preserving overall contrast.<br>
 * `1.0` = neutral
 * `0.0` = solid black
+
 Must be between `0.0..100.0`.<br>
 Default: `1.0`.
 
@@ -815,6 +835,7 @@ Algorithm for deinterlacing.<br>
     slightly for the GPU.
 * `"bwdif"`: "Bob weaver deinterlacing filter". Motion-adaptive deinterlacer
     based on yadif, with the use of w3fdif and cubic interpolation algorithms.
+
 Default: `"yadif"`.<br>
 If this is specified, deinterlacing is enabled.
 
@@ -826,6 +847,7 @@ Field order and deinterlacing mode.<br>
 * `1`: Single rate, Top Field First.
 * `2`: Double rate, Bottom Field First.
 * `3`: Double rate, Top Field First.
+
 Default: `-1`.<br>
 If this is specified, deinterlacing is enabled.
 
@@ -863,6 +885,7 @@ Default: if `preset` is not specified, `false`.
 * `"error_diffusion"`: Only formats with one plane are supported. This is a very slow and memory
     intensive method of dithering without the use of a fixed dither pattern. It's
     highly recommended to use this only for still images, not moving video.
+
 Default: `"blue"`.<br>
 If this is specified, `dither` is always `true`.
 
@@ -891,6 +914,7 @@ Kernel to use if `dither_method` is set to error diffusion.<br>
 * `"burkes"`: Burkes kernel (very slow)
 * `"sierra-2"`: Two-row Sierra (very slow)
 * `"sierra-3"`: Three-row Sierra (very slow)
+
 Default: `"floyd-steinberg"`.
 
 [Back to top](#description)
@@ -942,6 +966,7 @@ How the LUT should be applied.<br>
 * `"native"`: LUT is applied to raw image contents
 * `"normalized"`: LUT is applied to normalized (HDR) RGB values
 * `"conversion"`: LUT fully replaces color conversion step
+
 Default: `"unknown"`.
 
 ##### ***`border`***
@@ -949,6 +974,7 @@ Controls how the remaining empty space in the target is filled up, when the imag
 * `"color"`: Fill the border with a solid color (see `border_color`).
 * `"blur"`: Fill the border with a blurred copy of the image (see `blur_radius`).
 * `"skip"`: Skip clearing the border. This usually results in garbage data.
+
 If this is specified and `aspect_mode` is not specified, `aspect_mode="fit"`.<br>
 Default: `"color"`.
 
@@ -964,6 +990,7 @@ Default: `[0.0, 0.0, 0.0]` (Black).
 Controls the transparency of the border/background.<br>
 * `0.0`: Fully Opaque.
 * `1.0`: Fully Transparent.
+
 **Note:** This only affects the output if the destination format has an alpha channel. If the output is opaque, this setting is ignored.<br>
 If this is specified and `aspect_mode` is not specified, `aspect_mode="fit"`.<br>
 Default: `0.0`.
