@@ -408,7 +408,7 @@ transfer, primaries, and levels.<br>
 * `"p3"`, `"dci-p3"`
 * `"p3-d65"`, `"display-p3"`
 
-Default: not specified.
+Default: `src_csp="srgb"` for RGB, `src_csp="sdr"` for YUV, `dst_csp=src_csp`.
 
 ##### ***`src_matrix` / `dst_matrix`***
 Color system coefficients.<br>
