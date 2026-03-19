@@ -179,7 +179,7 @@ float "background_transparency",
 float "blur_radius",
 float "corner_rounding",
 int "device",
-bool "list_device",
+bool "list_devices",
 string "cache_path")
 ```
 
