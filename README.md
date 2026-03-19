@@ -483,7 +483,7 @@ Alpha channel interpretation.<br>
 * `"independent"`
 * `"premultiplied"`
 
-Default: not specified.
+Default: `none` for color format without Alpha, otherwise `independent`. `dst_alpha = src_alpha`.
 
 ##### ***`src_cplace` / `dst_cplace`***
 Chroma sample location.<br>
