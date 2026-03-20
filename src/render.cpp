@@ -271,6 +271,14 @@ namespace
         }
 
         auto& dst_frame{d->dst_frame};
+        const int dst_bit_depth{dst_frame.repr.bits.color_depth};
+
+        if (dst_frame.repr.bits.color_depth == 32)
+        {
+            for (int i{0}; i < d->dst_num_planes; ++i)
+                dst_frame.planes[i].texture = vf->tex_out[i];
+        }
+
         pl_frame_set_chroma_location(&dst_frame, d->dst_cplace);
 
         if (!pl_render_image(vf->rr.get(), &src_frame, &dst_frame, d->render_data.get()))
@@ -278,7 +286,7 @@ namespace
 
         // Download planes
         const auto& dst_planes{d->dst_planes};
-        const int dst_bit_depth{dst_frame.repr.bits.color_depth};
+
         for (int i{0}; i < d->dst_num_planes; ++i)
         {
             const int plane{dst_planes[i]};
