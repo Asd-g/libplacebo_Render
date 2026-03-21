@@ -854,6 +854,7 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
     {
         struct scaler_args_ids
         {
+            std::string_view scaler_type;
             int name;
             int kernel;
             int window;
@@ -890,18 +891,31 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
             auto name{avs_helpers::get_opt_arg<const char*>(env, args, ids.name)};
             if (!name)
             {
-                if (!is_mod_defined && preset)
-                    return nullptr;
-                name = default_name;
+                if (preset && (ids.scaler_type == "upscaler" || ids.scaler_type == "downscaler"))
+                {
+                    if (!is_mod_defined)
+                    {
+                        msg = "preset";
+                        return nullptr;
+                    }
+                    else
+                    {
+                        name = (ids.scaler_type == "upscaler") ? render_data->upscaler->name : render_data->downscaler->name;
+                    }
+                }
+                else
+                {
+                    name = default_name;
+                }
             }
 
             if (iequals(*name, "none"))
                 return nullptr;
 
-            const pl_filter_usage filter_usage{(ids.name == get_param_idx<"upscaler">() || ids.name == get_param_idx<"plane_upscaler">())
-                                                   ? PL_FILTER_UPSCALING
-                                                   : PL_FILTER_DOWNSCALING};
+            const pl_filter_usage filter_usage{
+                (ids.scaler_type == "upscaler" || ids.scaler_type == "plane_upscaler") ? PL_FILTER_UPSCALING : PL_FILTER_DOWNSCALING};
             const pl_filter_config* base{pl_find_filter_config(*name, filter_usage)};
+
             if (!base)
             {
                 msg = std::format("libplacebo_Render: Invalid scaler '{}'.", *name);
@@ -959,6 +973,7 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
         }};
 
         scaler_args_ids up_ids{
+            "upscaler",
             get_param_idx<"upscaler">(),
             get_param_idx<"upscaler_kernel">(),
             get_param_idx<"upscaler_window">(),
@@ -974,6 +989,7 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
             get_param_idx<"upscaler_wparam2">(),
         };
         scaler_args_ids down_ids{
+            "downscaler",
             get_param_idx<"downscaler">(),
             get_param_idx<"downscaler_kernel">(),
             get_param_idx<"downscaler_window">(),
@@ -990,6 +1006,7 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
         };
 
         scaler_args_ids p_up_ids{
+            "plane_upscaler",
             get_param_idx<"plane_upscaler">(),
             get_param_idx<"plane_upscaler_kernel">(),
             get_param_idx<"plane_upscaler_window">(),
@@ -1005,6 +1022,7 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
             get_param_idx<"plane_upscaler_wparam2">(),
         };
         scaler_args_ids p_down_ids{
+            "plane_downscaler",
             get_param_idx<"plane_downscaler">(),
             get_param_idx<"plane_downscaler_kernel">(),
             get_param_idx<"plane_downscaler_window">(),
@@ -1021,11 +1039,18 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
         };
 
         const auto parsed_upscaler{parse_scaler(up_ids, params->upscaler_config, "ewa_lanczossharp")};
-        if (!msg.empty())
+        if (msg.empty())
+            render_data->upscaler = parsed_upscaler;
+        else if (msg != "preset")
             return avs_err_val(env, msg);
+        msg = "";
+
         const auto parsed_downscaler{parse_scaler(down_ids, params->downscaler_config, "catmull_rom")};
-        if (!msg.empty())
+        if (msg.empty())
+            render_data->downscaler = parsed_downscaler;
+        else if (msg != "preset")
             return avs_err_val(env, msg);
+        msg = "";
 
         const auto parsed_plane_upscaler{parse_scaler(p_up_ids, params->plane_upscaler_config, "spline36")};
         if (!msg.empty())
@@ -1034,8 +1059,6 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
         if (!msg.empty())
             return avs_err_val(env, msg);
 
-        render_data->upscaler = parsed_upscaler;
-        render_data->downscaler = parsed_downscaler;
         render_data->plane_upscaler = parsed_plane_upscaler;
         render_data->plane_downscaler = parsed_plane_downscaler;
 
