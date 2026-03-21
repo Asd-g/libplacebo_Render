@@ -273,7 +273,7 @@ namespace
         auto& dst_frame{d->dst_frame};
         const int dst_bit_depth{dst_frame.repr.bits.color_depth};
 
-        if (dst_frame.repr.bits.color_depth == 32)
+        if (dst_bit_depth == 32)
         {
             for (int i{0}; i < d->dst_num_planes; ++i)
                 dst_frame.planes[i].texture = vf->tex_out[i];
