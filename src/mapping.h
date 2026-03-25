@@ -478,7 +478,7 @@ bool parse_out_fmt(std::string_view str, AVS_VideoInfo* vi, bool& is_rgb) noexce
         {"YUV420P16", "", AVS_CS_YUV420P16, false},
         {"YUV422P16", "", AVS_CS_YUV422P16, false},
         {"YUV444P16", "", AVS_CS_YUV444P16, false},
-        {"RGBP16", "", AVS_CS_RGBP16},
+        {"RGBP16", "", AVS_CS_RGBP16, true},
 
         {"YUVA420P16", "", AVS_CS_YUVA420P16, false},
         {"YUVA422P16", "", AVS_CS_YUVA422P16, false},
