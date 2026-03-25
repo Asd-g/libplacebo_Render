@@ -680,7 +680,7 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
         return avs_new_value_error("libplacebo_Render: clip must be in planar format.");
 
     const int src_num_comp{g_avs_api->avs_num_components(&vi)};
-    const int is_src_rgb{avs_is_rgb(&vi)};
+    const bool is_src_rgb{static_cast<bool>(avs_is_rgb(&vi))};
     const int src_bit_depth{g_avs_api->avs_bits_per_component(&vi)};
     std::string msg;
 
@@ -1811,11 +1811,10 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
                 return avs_err_val(env, std::format("libplacebo_Render: invalid dst_matrix '{}'.", *dst_matrix));
             else
                 dst_frame.repr.sys = (is_rgb) ? PL_COLOR_SYSTEM_RGB : PL_COLOR_SYSTEM_BT_709;
-
-            if (!dst_levels)
-                dst_frame.repr.levels =
-                    (is_rgb || (g_avs_api->avs_component_size(&vi) == 4)) ? PL_COLOR_LEVELS_FULL : PL_COLOR_LEVELS_LIMITED;
         }
+
+        if (!dst_levels && (src_bit_depth != g_avs_api->avs_bits_per_component(&vi) || is_src_rgb != is_rgb))
+            dst_frame.repr.levels = (is_rgb || (g_avs_api->avs_component_size(&vi) == 4)) ? PL_COLOR_LEVELS_FULL : PL_COLOR_LEVELS_LIMITED;
 
         params->dst_num_planes = g_avs_api->avs_num_components(&vi);
         if (render_data->error_diffusion && params->dst_num_planes > 1)
