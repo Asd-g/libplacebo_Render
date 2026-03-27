@@ -274,7 +274,7 @@ Spline family:
 * `"ewa_robidoux"`
 * `"ewa_robidouxsharp"`
 
-plane_upscaler / plane_downscaler is used for chroma scaling when internally converting to RGB.
+`plane_upscaler` / `plane_downscaler` is used for chroma scaling when internally converting to RGB.
 
 Default: if `preset` is not specified:<br>
 * upscaler=ewa_lanczossharp
@@ -286,6 +286,8 @@ Default: if `preset` is not specified:<br>
 
 ##### ***`upscaler_window` / `downscaler_window` / `plane_upscaler_kernel` / `plane_downscaler_window`***
 Override the scaler kernel and window function, rspectively.<br>
+[List](https://github.com/haasn/libplacebo/blob/v7.360.0/src/filters.c#L617-L648) of the kernels and windows (names are without the prefix
+`pl_filter_function_`)<br>
 Default: not specified.
 
 ##### ***`upscaler_radius` / `downscaler_radius` / `plane_upscaler_radius` / `plane_downscaler_radius`***
