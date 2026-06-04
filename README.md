@@ -18,7 +18,7 @@ a reusable library for GPU-accelerated image/video processing primitives and sha
 [Scaling](#scaling)<br>
 [Image Enhancement](#image-enhancement)<br>
 [Color Space Definitions](#color-space-definitions)<br>
-[Tone & Gamut Mapping](#tone-gamut-mapping)<br>
+[Tone & Gamut Mapping](#tone--gamut-mapping)<br>
 [HDR & Metadata](#hdr--metadata)<br>
 [Color Adjustments](#color-adjustments)<br>
 [Deinterlacing](#deinterlacing)<br>
@@ -776,7 +776,8 @@ Default: `"any"`.
 
 ##### ***`dovi_metadata`***
 Enable parsing and application of Dolby Vision RPU metadata.<br>
-Default: `false`.
+It has only effect for source color space with HDR transfer.<br>
+Default: `false`, always `true` for Dolby Vision .
 
 [Back to top](#description)
 

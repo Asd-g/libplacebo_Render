@@ -342,7 +342,7 @@ namespace
         const AVS_Map* props{g_avs_api->avs_get_frame_props_ro(env, src_ptr.get())};
         auto& src_repr{d->src_frame.repr};
         auto& src_pl_csp{d->src_frame.color};
-        const auto& dovi_meta{d->dovi_meta};
+        auto& dovi_meta{d->dovi_meta};
         src_repr.dovi = nullptr;
 
         if (!dovi_meta)
@@ -422,15 +422,18 @@ namespace
                 if (!header)
                     return set_err(std::format("libplacebo_Render: failed parsing RPU: {}", dovi_rpu_get_error(rpu.get())));
 
-                d->dovi_meta = create_dovi_meta(rpu.get(), *header);
-                src_repr.dovi = d->dovi_meta.get();
-
-                if (header->guessed_profile == 5 && src_repr.levels != PL_COLOR_LEVELS_FULL)
+                if (src_repr.sys == PL_COLOR_SYSTEM_DOLBYVISION)
                 {
-                    check_set_prop(fi, props, false, "_ColorRange", &map_libpl_avs_levels, src_repr.levels, false);
+                    dovi_meta = create_dovi_meta(rpu.get(), *header);
+                    src_repr.dovi = dovi_meta.get();
 
-                    if (src_repr.levels != PL_COLOR_LEVELS_FULL)
-                        return set_err("libplacebo_Render: Dolby Vision Profile 5 requires full levels.");
+                    if (header->guessed_profile == 5 && src_repr.levels != PL_COLOR_LEVELS_FULL)
+                    {
+                        check_set_prop(fi, props, false, "_ColorRange", &map_libpl_avs_levels, src_repr.levels, false);
+
+                        if (src_repr.levels != PL_COLOR_LEVELS_FULL)
+                            return set_err("libplacebo_Render: Dolby Vision Profile 5 requires full levels.");
+                    }
                 }
 
                 pl_hdr_metadata_from_dovi_rpu(&hdr_props, doviRpu, doviRpuSize);
@@ -1235,6 +1238,9 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
             if (!pl_color_transfer_is_hdr(src_frame.color.transfer))
                 return avs_new_value_error("libplacebo_Render: BT.2100 ICtCp requires an HDR transfer function (PQ/HLG).");
         }
+
+        if (src_sys == PL_COLOR_SYSTEM_DOLBYVISION && !pl_color_transfer_is_hdr(src_frame.color.transfer))
+            return avs_new_value_error("libplacebo_Render: Dolby Vision requires an HDR transfer function (PQ/HLG).");
     }
 
     // --- Destination color ---
@@ -1531,19 +1537,14 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
         const auto tone_map_metadata{avs_helpers::get_opt_arg<std::string>(env, args, get_param_idx<"tone_map_metadata">())};
         const auto dovi_metadata{avs_helpers::get_opt_arg<bool>(env, args, get_param_idx<"dovi_metadata">())};
 
+        if ((dovi_metadata && *dovi_metadata && pl_color_transfer_is_hdr(src_frame.color.transfer)) ||
+            src_sys == PL_COLOR_SYSTEM_DOLBYVISION)
+            params->dovi_meta = std::make_unique<pl_dovi_metadata>();
+
         if (tone_mapping_f || !tone_constants.empty() || inverse_tone_mapping || tone_lut_size || contrast_recovery ||
             contrast_smoothness || peak_detect || peak_detection_preset || peak_smoothing_period || scene_threshold_low ||
-            scene_threshold_high || peak_percentile || black_cutoff || src_max || src_min || dst_max || dst_min || tone_map_metadata ||
-            dovi_metadata)
+            scene_threshold_high || peak_percentile || black_cutoff || src_max || src_min || dst_max || dst_min || tone_map_metadata)
         {
-            if (dovi_metadata || src_sys == PL_COLOR_SYSTEM_DOLBYVISION)
-            {
-                if (dovi_metadata && *dovi_metadata && src_sys != PL_COLOR_SYSTEM_DOLBYVISION)
-                    return avs_new_value_error("libplacebo_Render: dovi_metadata requires dovi matrix");
-
-                params->dovi_meta = std::make_unique<pl_dovi_metadata>();
-            }
-
             if (!color_map_params)
                 color_map_params = std::make_unique<pl_color_map_params>(*color_map_base);
 
@@ -1803,7 +1804,7 @@ AVS_Value AVSC_CC create_render(AVS_ScriptEnvironment* env, AVS_Value args, void
 
         bool is_rgb{};
         if (!parse_out_fmt((dst_csp) ? dst_csp_fmt : *out_fmt, &vi, is_rgb))
-            return avs_err_val(env, std::format("libplacebo_Render: Invalid out_fmt '{}'.", *out_fmt));
+            return avs_err_val(env, std::format("libplacebo_Render: Invalid out_fmt '{}'.", (dst_csp) ? dst_csp_fmt : *out_fmt));
 
         if (is_rgb != (dst_frame.repr.sys == PL_COLOR_SYSTEM_RGB))
         {
